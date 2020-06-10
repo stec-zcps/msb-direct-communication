@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Text;
 
-namespace DirectCommunication.Interfaces
+namespace msb.separate.Interfaces
 {
     public interface BaseInterface
     {

@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Text;
 
-namespace DirectCommunication
+namespace msb.separate
 {
     public class GenericDictionary
     {
@@ -21,6 +21,13 @@ namespace DirectCommunication
         public bool ContainsKey(String key)
         {
             return _dict.ContainsKey(key);
+        }
+
+        public List<string> Keys()
+        {
+            var r = new List<string>(_dict.Keys);
+
+            return r;
         }
     }
 }

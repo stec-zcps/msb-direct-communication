@@ -1,9 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Text;
-using static DirectCommunication.ServiceInterfaceParameter;
+using static msb.separate.ServiceInterfaceParameter;
 
-namespace DirectCommunication
+namespace msb.separate
 {
     public class SubscriptionParameter
     {

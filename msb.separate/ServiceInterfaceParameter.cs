@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Text;
 
-namespace DirectCommunication
+namespace msb.separate
 {
     public class ServiceInterfaceParameter
     {
