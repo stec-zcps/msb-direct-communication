@@ -9,6 +9,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "msb.separate.direct.tcp.bei
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "msb.separate.direct.tcp", "msb.separate.direct.tcp\msb.separate.direct.tcp.csproj", "{C1AADB70-E915-4D43-B1AF-7B12F29FBC5D}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "msb.separate.broker.mqtt", "msb.separate.broker.mqtt\msb.separate.broker.mqtt.csproj", "{6141BA8E-6412-4644-8F7C-9B5F5BAC143A}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -27,6 +29,10 @@ Global
 		{C1AADB70-E915-4D43-B1AF-7B12F29FBC5D}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{C1AADB70-E915-4D43-B1AF-7B12F29FBC5D}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{C1AADB70-E915-4D43-B1AF-7B12F29FBC5D}.Release|Any CPU.Build.0 = Release|Any CPU
+		{6141BA8E-6412-4644-8F7C-9B5F5BAC143A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{6141BA8E-6412-4644-8F7C-9B5F5BAC143A}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{6141BA8E-6412-4644-8F7C-9B5F5BAC143A}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{6141BA8E-6412-4644-8F7C-9B5F5BAC143A}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
