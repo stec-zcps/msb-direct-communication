@@ -4,9 +4,9 @@ using System.Text;
 
 namespace msb.separate
 {
-    public class EventData<T>
+    public class EventData
     {
         public String Id;
-        public T Data;
+        public Dictionary<String, Object> Data;
     }
 }

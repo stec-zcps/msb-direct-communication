@@ -6,6 +6,6 @@ namespace msb.separate.Interfaces
 {
     public interface BasePublisher
     {
-        bool PublishEvent<T>(EventData<T> eventToPublish);
+        bool PublishEvent(EventData eventToPublish);
     }
 }

@@ -15,7 +15,7 @@ namespace msb.separate.direct.tcp
 
         private readonly string Ip;
         private readonly UInt16 Port;
-        private GenericDictionary _subscriptionMapping;
+        private Dictionary<String, SubscriptionInstruction> Integrationen;
 
         private byte[] buffer = new byte[1024];
 
@@ -24,7 +24,7 @@ namespace msb.separate.direct.tcp
             Ip = localIp;
             Port = localPort;
 
-            _subscriptionMapping = new GenericDictionary();
+            Integrationen = new Dictionary<string, SubscriptionInstruction>();
         }
 
         public bool Connect()
@@ -38,24 +38,27 @@ namespace msb.separate.direct.tcp
             {
                 return false;
             }
+
+            MakeSubscriptions();
+
             return tcpClient.Connected;
         }
 
-        public bool AddSubscription<T>(string id, Interfaces.BaseInterfaceUtils.SubscriptionReceivedCallback<T> callback)
+        public bool AddSubscription(string id, SubscriptionInstruction instr)
         {
-            if (_subscriptionMapping.ContainsKey(id))
+            if (Integrationen.ContainsKey(id))
                 return false;
 
-            _subscriptionMapping.Add(id, callback);
+            Integrationen.Add(id, instr);
 
             return true;
         }
 
         public void MakeSubscriptions()
         {
-            foreach(var s in _subscriptionMapping.Keys())
+            foreach(var s in Integrationen)
             {
-                var d = new SubscriptionParameter() { EventId = s };
+                var d = new SubscriptionInstruction() { EventId = s.Value.EventId };
                 var j = Newtonsoft.Json.JsonConvert.SerializeObject(d);
                 var b = System.Text.ASCIIEncoding.ASCII.GetBytes(j);
                 tcpClient.GetStream().Write(b, 0, b.Length);
@@ -74,27 +77,37 @@ namespace msb.separate.direct.tcp
 
             tcpClient.GetStream().BeginRead(buffer, 0, buffer.Length, ListenCallback, buffer);
 
-            var deserializedData = JsonConvert.DeserializeObject<EventData<object>>(messageBufferAsUnicode);
+            var deserializedData = JsonConvert.DeserializeObject<EventData>(messageBufferAsUnicode);
 
-            if (!this._subscriptionMapping.ContainsKey(deserializedData.Id))
+            foreach (var s in Integrationen)
             {
-                Debug.WriteLine("Warning: Unknown subscription id: " + deserializedData.Id);
-                return;
+                if (s.Value.EventId == deserializedData.Id)
+                {
+                    var pointer = s.Value.fPointer;
+                    var parameters = pointer.Method.GetParameters();
+                    var parameterArrayForInvoke = new object[parameters.Length];
+
+                    foreach (var eintrag in s.Value.paramMapping)
+                    {
+                        int currentParameterCallIndex = 0;
+                        for (; currentParameterCallIndex < parameters.Length; currentParameterCallIndex++)
+                        {
+                            if (parameters[currentParameterCallIndex].Name == eintrag.Key)
+                            {
+                                var currentParameterCallType = pointer.Method.GetParameters()[currentParameterCallIndex].ParameterType;
+                                break;
+                            }
+                        }
+
+                        Object deserializedParameter = null;
+                        deserializedParameter = deserializedData.Data[eintrag.Value];
+
+                        parameterArrayForInvoke[currentParameterCallIndex] = deserializedParameter;
+                    }
+
+                    pointer.DynamicInvoke(parameterArrayForInvoke);
+                }
             }
-
-            var callbackAsObjectType = this._subscriptionMapping.GetValue<object>(deserializedData.Id);
-            var genericArgumentType = callbackAsObjectType.GetType().GenericTypeArguments[0];
-
-            var genericCallbackObjectType = typeof(SubscriptionReceivedCallback<>);
-            var realType = genericCallbackObjectType.MakeGenericType(genericArgumentType);
-
-            var realTypeDelegate = Convert.ChangeType(callbackAsObjectType, realType);
-            var realTypeDelegateReal = realTypeDelegate as Delegate;
-
-            var deserializedDataWithRealType = JsonConvert.DeserializeObject(messageBufferAsUnicode, typeof(EventData<>).MakeGenericType(genericArgumentType));
-
-            // TODO: Start in own thread? Or is aync enough anyway?
-            realTypeDelegateReal.DynamicInvoke(deserializedDataWithRealType);
         }
     }
 
@@ -182,7 +195,7 @@ namespace msb.separate.direct.tcp
 
             try
             {
-                var deserializedData = JsonConvert.DeserializeObject<SubscriptionParameter>(messageBuffer);
+                var deserializedData = JsonConvert.DeserializeObject<SubscriptionInstruction>(messageBuffer);
 
                 if (!this.TopicSubscriberlist.ContainsKey(deserializedData.EventId))
                 {
@@ -199,7 +212,7 @@ namespace msb.separate.direct.tcp
             }
         }
 
-        public bool PublishEvent<T>(EventData<T> eventToPublish)
+        public bool PublishEvent(EventData eventToPublish)
         {
             if (this.TopicSubscriberlist.ContainsKey(eventToPublish.Id)){
                 var c_liste = TopicSubscriberlist[eventToPublish.Id];

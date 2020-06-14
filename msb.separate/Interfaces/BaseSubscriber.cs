@@ -7,6 +7,6 @@ namespace msb.separate.Interfaces
     public interface BaseSubscriber
     {
         bool Connect();
-        bool AddSubscription<T>(String id, BaseInterfaceUtils.SubscriptionReceivedCallback<T> callback);
+        bool AddSubscription(String id, SubscriptionInstruction instr);
     }
 }
