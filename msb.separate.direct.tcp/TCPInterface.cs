@@ -12,14 +12,14 @@ namespace msb.separate.direct.tcp
 {
     public class TCPInterface : BaseInterface
     {
-        private TCPConfiguration configuration;
+        private TCPConfiguration Configuration;
 
         private List<TCPSubscriber> subscriber;
         private List<TCPPublisher> publisher;
 
         public TCPInterface(TCPConfiguration config)
         {
-            this.configuration = config;
+            this.Configuration = config;
 
             List<String> events = new List<string>();
             foreach(var p in config.publications) events.Add(p.Value.EventId);
@@ -149,7 +149,7 @@ namespace msb.separate.direct.tcp
 
         private readonly string Ip;
         private readonly UInt16 Port;
-        private Dictionary<String, SubscriptionInstruction> Integrationen;
+        private Dictionary<String, SubscriptionInstruction> Subscriptions;
 
         private byte[] buffer = new byte[1024];
 
@@ -158,7 +158,7 @@ namespace msb.separate.direct.tcp
             Ip = localIp;
             Port = localPort;
 
-            Integrationen = new Dictionary<string, SubscriptionInstruction>();
+            Subscriptions = new Dictionary<string, SubscriptionInstruction>();
         }
 
         public bool Connect()
@@ -180,9 +180,8 @@ namespace msb.separate.direct.tcp
 
                 Listen();
             }
-            catch (Exception e)
+            catch
             {
-                Console.WriteLine(e.ToString());
             }
         }
 
@@ -195,17 +194,17 @@ namespace msb.separate.direct.tcp
 
         public bool AddSubscription(string id, SubscriptionInstruction instr)
         {
-            if (Integrationen.ContainsKey(id))
+            if (Subscriptions.ContainsKey(id))
                 return false;
 
-            Integrationen.Add(id, instr);
+            Subscriptions.Add(id, instr);
 
             return true;
         }
 
         public void MakeSubscriptions()
         {
-            foreach(var s in Integrationen)
+            foreach(var s in Subscriptions)
             {
                 var d = new SubscriptionInstruction() { EventId = s.Value.EventId };
                 var j = Newtonsoft.Json.JsonConvert.SerializeObject(d);
@@ -231,7 +230,7 @@ namespace msb.separate.direct.tcp
 
                 var deserializedData = JsonConvert.DeserializeObject<EventData>(messageBufferAsUnicode);
 
-                foreach (var s in Integrationen)
+                foreach (var s in Subscriptions)
                 {
                     if (s.Value.EventId == deserializedData.Id)
                     {
@@ -318,19 +317,14 @@ namespace msb.separate.direct.tcp
 
         private void DoAcceptTcpClientCallback(IAsyncResult result)
         {
-            // Get the listener that handles the client request.
             TcpListener listener = (TcpListener)result.AsyncState;
 
-            // End the operation and display the received data on 
-            // the console.
             var cl = listener.EndAcceptTcpClient(result);
 
             Subscribers.Add(cl);
             SubscriberBuffer.Add(cl, new byte[1024]);
 
             cl.GetStream().BeginRead(SubscriberBuffer[cl], 0, SubscriberBuffer[cl].Length, ServerReadCallback, cl);
-
-            Debug.WriteLine(String.Format("Client connected from: {0}", cl.Client.RemoteEndPoint.ToString()));
         }
 
         private void ServerReadCallback(IAsyncResult result)

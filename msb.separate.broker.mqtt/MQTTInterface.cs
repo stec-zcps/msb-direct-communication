@@ -8,7 +8,7 @@ namespace msb.separate.broker.mqtt
 {
     public class MQTTInterface : BaseInterface
     {
-        private MQTTConfiguration configuration;
+        private MQTTConfiguration Configuration;
 
         private List<MQTTPubSub> subInterfaces;
 
@@ -16,7 +16,7 @@ namespace msb.separate.broker.mqtt
 
         public MQTTInterface(MQTTConfiguration config)
         {
-            this.configuration = config;
+            this.Configuration = config;
 
             List<String> events = new List<string>();
             foreach (var p in config.publications) events.Add(p.Value.EventId);
@@ -114,14 +114,14 @@ namespace msb.separate.broker.mqtt
 
         private readonly string Ip;
         private readonly UInt16 Port;
-        private Dictionary<String, SubscriptionInstruction> Integrationen;
+        private Dictionary<String, SubscriptionInstruction> Subscriptions;
 
         public MQTTPubSub(string brokerIp, UInt16 brokerPort, Dictionary<string, SubscriptionInstruction> subs = null)
         {
             Ip = brokerIp;
             Port = brokerPort;
 
-            if (subs != null) Integrationen = subs;
+            if (subs != null) Subscriptions = subs;
         }
 
         public bool Connect()
@@ -139,7 +139,7 @@ namespace msb.separate.broker.mqtt
 
                 mqttClient.ConnectedHandler = new MQTTnet.Client.Connecting.MqttClientConnectedHandlerDelegate(e =>
                 {
-                    if(Integrationen != null) MakeSubscriptions();
+                    if(Subscriptions != null) MakeSubscriptions();
                 });
 
                 mqttClient.ApplicationMessageReceivedHandler = new MQTTnet.Client.Receiving.MqttApplicationMessageReceivedHandlerDelegate(e =>
@@ -149,7 +149,7 @@ namespace msb.separate.broker.mqtt
                     var deserializedData = JsonConvert.DeserializeObject<EventData>(msg);
                     deserializedData.Id = e.ApplicationMessage.Topic;
 
-                    foreach (var s in Integrationen)
+                    foreach (var s in Subscriptions)
                     {
                         if (s.Value.EventId == deserializedData.Id)
                         {
@@ -195,17 +195,17 @@ namespace msb.separate.broker.mqtt
 
         public bool AddSubscription(string id, SubscriptionInstruction instr)
         {
-            if (Integrationen.ContainsKey(id))
+            if (Subscriptions.ContainsKey(id))
                 return false;
 
-            Integrationen.Add(id, instr);
+            Subscriptions.Add(id, instr);
 
             return true;
         }
 
         public void MakeSubscriptions()
         {
-            foreach (var s in Integrationen)
+            foreach (var s in Subscriptions)
             {
                 mqttClient.SubscribeAsync(new MQTTnet.Client.Subscribing.MqttClientSubscribeOptionsBuilder().WithTopicFilter(s.Value.EventId).Build(), System.Threading.CancellationToken.None);
             }
