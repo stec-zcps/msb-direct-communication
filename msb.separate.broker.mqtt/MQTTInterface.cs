@@ -12,6 +12,8 @@ namespace msb.separate.broker.mqtt
 
         private List<MQTTPubSub> subInterfaces;
 
+        private Dictionary<String, List<MQTTPubSub>> relevantClientsForPublishing;
+
         public MQTTInterface(MQTTConfiguration config)
         {
             this.configuration = config;
@@ -29,8 +31,12 @@ namespace msb.separate.broker.mqtt
                 }
             }
 
+            relevantClientsForPublishing = new Dictionary<string, List<MQTTPubSub>>();
+
             foreach (var s in config.publications)
             {
+                if (!relevantClientsForPublishing.ContainsKey(s.Value.EventId)) relevantClientsForPublishing.Add(s.Value.EventId, new List<MQTTPubSub>());
+
                 if (!connections.Exists(e => e.Key == s.Value.Ip))
                 {
                     connections.Add(new KeyValuePair<string, ushort>(s.Value.Ip, s.Value.Port));
@@ -48,6 +54,10 @@ namespace msb.separate.broker.mqtt
 
                     foreach (var s_ in subs) sub.AddSubscription(s_.Key, s_.Value);
 
+                    var pubs = config.publications.Where(e => e.Value.Ip == s.Key && e.Value.Port == s.Value);
+
+                    foreach (var p_ in pubs) relevantClientsForPublishing[p_.Key].Add(sub);
+
                     subInterfaces.Add(sub);
                 }
             }
@@ -61,6 +71,11 @@ namespace msb.separate.broker.mqtt
         public void Stop()
         {
             foreach (var s in subInterfaces) s.Disconnect();
+        }
+
+        public void PublishEvent(EventData eventToPublish)
+        {
+            foreach (var p in relevantClientsForPublishing[eventToPublish.Id]) p.PublishEvent(eventToPublish);
         }
     }
 

@@ -8,12 +8,6 @@ namespace msb.separate.broker.mqtt.beispiel
 {
     class Program
     {
-        public class SampleStruct
-        {
-            public String someString;
-            public Int32 someInt;
-        }
-
         public static class funktionen
         {
             public static void funktion(string a, string b)
@@ -24,18 +18,22 @@ namespace msb.separate.broker.mqtt.beispiel
 
         static void Main(string[] args)
         {
-            msb.separate.broker.mqtt.MQTTPubSub s = new MQTTPubSub("127.0.0.1", 1884);
-            msb.separate.broker.mqtt.MQTTPublisher p = new MQTTPublisher("127.0.0.1", 1884);
+            var config = new MQTTConfiguration();
+            config.publications.Add("instr1", new MQTTConfiguration.MQTTPublicationInstruction() { EventId = "testEvent", Ip = "127.0.0.1", Port = 1884 });
 
-            var m = msb.separate.Interfaces.BaseInterfaceUtils.CreateFunctionPointer(typeof(funktionen).GetMethod("funktion"), null);
-            s.AddSubscription("testEvent", new SubscriptionInstruction() { EventId = "testEvent", FunctionPointer = m, IntegrationFlow = new System.Collections.Generic.Dictionary<string, string>() { { "a", "hallo" }, { "b", "hallo2" } } });
+            var fPtr = msb.separate.Interfaces.BaseInterfaceUtils.CreateFunctionPointer(typeof(funktionen).GetMethod("funktion"), null);
+            var intFlow = new System.Collections.Generic.Dictionary<string, string>() { { "a", "hallo" }, { "b", "hallo2" } };
+            config.subscriptions.Add("instr1", new MQTTConfiguration.MQTTSubscriptionInstruction() { EventId = "testEvent", Ip = "127.0.0.1", Port = 1884, FunctionPointer = fPtr, IntegrationFlow = intFlow});
 
-            p.Connect();
-            s.Connect();
+            var mqtt = new MQTTInterface(config);
+
+            mqtt.Start();
 
             System.Threading.Thread.Sleep(1000);
 
-            p.PublishEvent(new msb.separate.EventData() { Id = "testEvent", Data = new System.Collections.Generic.Dictionary<string, object> { {"hallo", "123" }, { "hallo2", "321" } } });
+            mqtt.PublishEvent(new msb.separate.EventData() { Id = "testEvent", Data = new System.Collections.Generic.Dictionary<string, object> { {"hallo", "123" }, { "hallo2", "321" } } });
+
+            mqtt.Stop();
 
             Console.ReadLine();
         }

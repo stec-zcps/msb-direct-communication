@@ -10,6 +10,7 @@ namespace msb.separate.Interfaces
     {
         public void Start();
         public void Stop();
+        public void PublishEvent(EventData eventToPublish);
     }
 
     public class BaseInterfaceUtils

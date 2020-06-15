@@ -4,12 +4,6 @@ namespace msb.separate.direct.tcp.beispiel
 {
     class Program
     {
-        public class SampleStruct
-        {
-            public String someString;
-            public Int32 someInt;
-        }
-
         public static class funktionen
         {
             public static void funktion(string a, string b)
@@ -20,20 +14,22 @@ namespace msb.separate.direct.tcp.beispiel
 
         static void Main(string[] args)
         {
-            msb.separate.direct.tcp.TCPSubscriber s = new direct.tcp.TCPSubscriber("127.0.0.1", 9999);
-            msb.separate.direct.tcp.TCPPublisher p = new direct.tcp.TCPPublisher("127.0.0.1", 9999, new System.Collections.Generic.List<string>() { "testEvent" });
+            var config = new TCPConfiguration();
+            config.publications.Add("instr1", new TCPConfiguration.TCPPublicationInstruction() { EventId = "testEvent" });
 
-            p.Start();
+            var fPtr = msb.separate.Interfaces.BaseInterfaceUtils.CreateFunctionPointer(typeof(funktionen).GetMethod("funktion"), null);
+            var intFlow = new System.Collections.Generic.Dictionary<string, string>() { { "a", "hallo" }, { "b", "hallo2" } };
+            config.subscriptions.Add("instr1", new TCPConfiguration.TCPSubscriptionInstruction() { EventId = "testEvent", Ip = "127.0.0.1", Port = 1884, FunctionPointer = fPtr, IntegrationFlow = intFlow });
 
-            var m = msb.separate.Interfaces.BaseInterfaceUtils.CreateFunctionPointer(typeof(funktionen).GetMethod("funktion"), null);
-            s.AddSubscription("testEvent", new SubscriptionInstruction() { EventId = "testEvent", FunctionPointer = m, IntegrationFlow = new System.Collections.Generic.Dictionary<string, string>() { { "a", "hallo" }, { "b", "hallo2" } } });
+            var tcp = new TCPInterface(config);
 
-            s.Connect();
-            s.Listen();
+            tcp.Start();
 
             System.Threading.Thread.Sleep(1000);
 
-            p.PublishEvent(new msb.separate.EventData() { Id = "testEvent", Data = new System.Collections.Generic.Dictionary<string, object> { { "hallo", "123" }, { "hallo2", "321" } } });
+            tcp.PublishEvent(new msb.separate.EventData() { Id = "testEvent", Data = new System.Collections.Generic.Dictionary<string, object> { { "hallo", "123" }, { "hallo2", "321" } } });
+
+            tcp.Stop();
 
             Console.ReadLine();
         }

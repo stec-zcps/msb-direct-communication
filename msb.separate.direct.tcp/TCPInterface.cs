@@ -76,6 +76,11 @@ namespace msb.separate.direct.tcp
                 }
             }
         }
+
+        public void PublishEvent(EventData eventToPublish)
+        {
+            publisher.PublishEvent(eventToPublish);
+        }
     }
 
     public class TCPConfiguration
