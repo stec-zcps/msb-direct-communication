@@ -7,11 +7,16 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "msb.separate", "msb.separat
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "msb.separate.direct.tcp.beispiel", "msb.separate.direct.tcp.beispiel\msb.separate.direct.tcp.beispiel.csproj", "{4C0BB98E-66D2-4F34-815A-431D39C1434D}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "msb.separate.direct.tcp", "msb.separate.direct.tcp\msb.separate.direct.tcp.csproj", "{C1AADB70-E915-4D43-B1AF-7B12F29FBC5D}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "msb.separate.direct.tcp", "msb.separate.direct.tcp\msb.separate.direct.tcp.csproj", "{C1AADB70-E915-4D43-B1AF-7B12F29FBC5D}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "msb.separate.broker.mqtt", "msb.separate.broker.mqtt\msb.separate.broker.mqtt.csproj", "{6141BA8E-6412-4644-8F7C-9B5F5BAC143A}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "msb.separate.broker.mqtt", "msb.separate.broker.mqtt\msb.separate.broker.mqtt.csproj", "{6141BA8E-6412-4644-8F7C-9B5F5BAC143A}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "msb.separate.broker.mqtt.beispiel", "msb.separate.broker.mqtt.beispiel\msb.separate.broker.mqtt.beispiel.csproj", "{4A06F367-482A-4236-80E4-7D1E03ACE083}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "msb.separate.broker.mqtt.beispiel", "msb.separate.broker.mqtt.beispiel\msb.separate.broker.mqtt.beispiel.csproj", "{4A06F367-482A-4236-80E4-7D1E03ACE083}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{3B4F3669-25ED-4A91-8E89-ADEE920FC8DB}"
+	ProjectSection(SolutionItems) = preProject
+		README.md = README.md
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

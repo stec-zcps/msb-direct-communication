@@ -19,6 +19,9 @@ namespace msb.separate.broker.mqtt.beispiel
         static void Main(string[] args)
         {
             var config = new MQTTConfiguration();
+            config.publications = new System.Collections.Generic.Dictionary<string, MQTTConfiguration.MQTTPublicationInstruction>();
+            config.subscriptions = new System.Collections.Generic.Dictionary<string, MQTTConfiguration.MQTTSubscriptionInstruction>();
+
             config.publications.Add("instr1", new MQTTConfiguration.MQTTPublicationInstruction() { EventId = "testEvent", Ip = "127.0.0.1", Port = 1884 });
 
             var fPtr = msb.separate.Interfaces.BaseInterfaceUtils.CreateFunctionPointer(typeof(funktionen).GetMethod("funktion"), null);
@@ -32,6 +35,8 @@ namespace msb.separate.broker.mqtt.beispiel
             System.Threading.Thread.Sleep(1000);
 
             mqtt.PublishEvent(new msb.separate.EventData() { Id = "testEvent", Data = new System.Collections.Generic.Dictionary<string, object> { {"hallo", "123" }, { "hallo2", "321" } } });
+
+            System.Threading.Thread.Sleep(1000);
 
             mqtt.Stop();
 

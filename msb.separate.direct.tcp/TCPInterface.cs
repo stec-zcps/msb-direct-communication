@@ -17,8 +17,6 @@ namespace msb.separate.direct.tcp
         private List<TCPSubscriber> subscriber;
         private List<TCPPublisher> publisher;
 
-        private Dictionary<String, List<TCPPublisher>> relevantClientsForPublishing;
-
         public TCPInterface(TCPConfiguration config)
         {
             this.configuration = config;
@@ -51,12 +49,9 @@ namespace msb.separate.direct.tcp
             }
 
             List<KeyValuePair<String, UInt16>> publications = new List<KeyValuePair<string, ushort>>();
-            relevantClientsForPublishing = new Dictionary<string, List<TCPPublisher>>();
 
             foreach (var s in config.publications)
             {
-                if (!relevantClientsForPublishing.ContainsKey(s.Value.EventId)) relevantClientsForPublishing.Add(s.Value.EventId, new List<TCPPublisher>());
-
                 if (!publications.Exists(e => e.Key == s.Value.Ip))
                 {
                     publications.Add(new KeyValuePair<string, ushort>(s.Value.Ip, s.Value.Port));
@@ -69,9 +64,16 @@ namespace msb.separate.direct.tcp
 
                 foreach (var p in publications)
                 {                    
-                    var pubs = config.publications.Where(e => e.Value.Ip == p.Key && e.Value.Port == p.Value);
+                    //var pubs = config.publications.Where(e => e.Value.Ip == p.Key && e.Value.Port == p.Value); //funktioniert nicht?
                     List<String> eventList = new List<string>();
-                    foreach (var p_ in pubs) eventList.Add(p_.Value.EventId);
+                    //foreach (var p_ in pubs) eventList.Add(p_.Value.EventId);
+                    foreach(var e_ in config.publications)
+                    {
+                        if(e_.Value.Ip == p.Key && e_.Value.Port == p.Value)
+                        {
+                            eventList.Add(e_.Value.EventId);
+                        }
+                    }
 
                     var pub = new TCPPublisher(p.Key, p.Value, eventList);
                     publisher.Add(pub);
@@ -94,21 +96,12 @@ namespace msb.separate.direct.tcp
                 foreach(var s in subscriber)
                 {
                     s.Connect();
-                    s.Listen();
                 }
             }
         }
 
         public void Stop()
         {
-            if (publisher != null)
-            {
-                foreach (var p in publisher)
-                {
-                    p.Stop();
-                }
-            }
-
             if (subscriber != null)
             {
                 foreach (var s in subscriber)
@@ -116,11 +109,19 @@ namespace msb.separate.direct.tcp
                     s.Disconnect();
                 }
             }
+
+            if (publisher != null)
+            {
+                foreach (var p in publisher)
+                {
+                    p.Stop();
+                }
+            }
         }
 
         public void PublishEvent(EventData eventToPublish)
         {
-            foreach (var p in relevantClientsForPublishing[eventToPublish.Id]) p.PublishEvent(eventToPublish);
+            foreach(var p in publisher) p.PublishEvent(eventToPublish);
         }
     }
 
@@ -140,9 +141,6 @@ namespace msb.separate.direct.tcp
 
         public Dictionary<String, TCPSubscriptionInstruction> subscriptions;
         public Dictionary<String, TCPPublicationInstruction> publications;
-
-        public string publicationIp;
-        public UInt16 publicationPort;
     }
 
     public class TCPSubscriber : Interfaces.BaseSubscriber
@@ -165,23 +163,33 @@ namespace msb.separate.direct.tcp
 
         public bool Connect()
         {
+            tcpClient = new TcpClient();
+
+            tcpClient.BeginConnect(Ip, Port, ConnectCallback, null);
+
+            return true;
+        }
+
+        private void ConnectCallback(IAsyncResult ar)
+        {
             try
             {
-                tcpClient = new TcpClient();
-                tcpClient.Connect(Ip, Port);
+                tcpClient.EndConnect(ar);
+
+                MakeSubscriptions();
+
+                Listen();
             }
-            catch
+            catch (Exception e)
             {
-                return false;
+                Console.WriteLine(e.ToString());
             }
-
-            MakeSubscriptions();
-
-            return tcpClient.Connected;
         }
 
         public void Disconnect()
         {
+            tcpClient.GetStream().Close();
+
             tcpClient.Close();
         }
 
@@ -201,7 +209,8 @@ namespace msb.separate.direct.tcp
             {
                 var d = new SubscriptionInstruction() { EventId = s.Value.EventId };
                 var j = Newtonsoft.Json.JsonConvert.SerializeObject(d);
-                var b = System.Text.ASCIIEncoding.ASCII.GetBytes(j);
+                var b = System.Text.ASCIIEncoding.ASCII.GetBytes(j);                
+
                 tcpClient.GetStream().Write(b, 0, b.Length);
             }
         }
@@ -216,39 +225,46 @@ namespace msb.separate.direct.tcp
             String messageBufferAsUnicode = Encoding.ASCII.GetString(buffer);
             messageBufferAsUnicode = messageBufferAsUnicode.Trim('\0');
 
-            tcpClient.GetStream().BeginRead(buffer, 0, buffer.Length, ListenCallback, buffer);
-
-            var deserializedData = JsonConvert.DeserializeObject<EventData>(messageBufferAsUnicode);
-
-            foreach (var s in Integrationen)
+            try
             {
-                if (s.Value.EventId == deserializedData.Id)
-                {
-                    var pointer = s.Value.FunctionPointer;
-                    var parameters = pointer.Method.GetParameters();
-                    var parameterArrayForInvoke = new object[parameters.Length];
+                tcpClient.GetStream().BeginRead(buffer, 0, buffer.Length, ListenCallback, buffer);
 
-                    foreach (var eintrag in s.Value.IntegrationFlow)
+                var deserializedData = JsonConvert.DeserializeObject<EventData>(messageBufferAsUnicode);
+
+                foreach (var s in Integrationen)
+                {
+                    if (s.Value.EventId == deserializedData.Id)
                     {
-                        int currentParameterCallIndex = 0;
-                        for (; currentParameterCallIndex < parameters.Length; currentParameterCallIndex++)
+                        var pointer = s.Value.FunctionPointer;
+                        var parameters = pointer.Method.GetParameters();
+                        var parameterArrayForInvoke = new object[parameters.Length];
+
+                        foreach (var eintrag in s.Value.IntegrationFlow)
                         {
-                            if (parameters[currentParameterCallIndex].Name == eintrag.Key)
+                            int currentParameterCallIndex = 0;
+                            for (; currentParameterCallIndex < parameters.Length; currentParameterCallIndex++)
                             {
-                                var currentParameterCallType = pointer.Method.GetParameters()[currentParameterCallIndex].ParameterType;
-                                break;
+                                if (parameters[currentParameterCallIndex].Name == eintrag.Key)
+                                {
+                                    var currentParameterCallType = pointer.Method.GetParameters()[currentParameterCallIndex].ParameterType;
+                                    break;
+                                }
                             }
+
+                            Object deserializedParameter = null;
+                            deserializedParameter = deserializedData.Data[eintrag.Value];
+
+                            parameterArrayForInvoke[currentParameterCallIndex] = deserializedParameter;
                         }
 
-                        Object deserializedParameter = null;
-                        deserializedParameter = deserializedData.Data[eintrag.Value];
-
-                        parameterArrayForInvoke[currentParameterCallIndex] = deserializedParameter;
+                        pointer.DynamicInvoke(parameterArrayForInvoke);
                     }
-
-                    pointer.DynamicInvoke(parameterArrayForInvoke);
                 }
             }
+            catch
+            {
+
+            }            
         }
     }
 
@@ -294,7 +310,7 @@ namespace msb.separate.direct.tcp
 
         public void Stop()
         {
-            tcpListener.Stop();
+            if(tcpListener != null) tcpListener.Stop();
             Subscribers.Clear();
             SubscriberBuffer.Clear();
             foreach (var t in TopicSubscriberlist) t.Value.Clear();
@@ -319,25 +335,32 @@ namespace msb.separate.direct.tcp
 
         private void ServerReadCallback(IAsyncResult result)
         {
-            var cl = (TcpClient)result.AsyncState;
-            var b = SubscriberBuffer[cl];
-
-            String messageBuffer = Encoding.ASCII.GetString(b);//messageBuffer);
-            messageBuffer = messageBuffer.Trim('\0');
-
-            cl.GetStream().BeginRead(SubscriberBuffer[cl], 0, SubscriberBuffer[cl].Length, ServerReadCallback, SubscriberBuffer[cl]);
-
             try
             {
-                var deserializedData = JsonConvert.DeserializeObject<SubscriptionInstruction>(messageBuffer);
+                var cl = (TcpClient)result.AsyncState;
+                var b = SubscriberBuffer[cl];
 
-                if (!this.TopicSubscriberlist.ContainsKey(deserializedData.EventId))
+                String messageBuffer = Encoding.ASCII.GetString(b);//messageBuffer);
+                messageBuffer = messageBuffer.Trim('\0');
+
+                cl.GetStream().BeginRead(SubscriberBuffer[cl], 0, SubscriberBuffer[cl].Length, ServerReadCallback, SubscriberBuffer[cl]);
+
+                try
                 {
-                    return;
+                    var deserializedData = JsonConvert.DeserializeObject<SubscriptionInstruction>(messageBuffer);
+
+                    if (!this.TopicSubscriberlist.ContainsKey(deserializedData.EventId))
+                    {
+                        return;
+                    }
+                    else
+                    {
+                        TopicSubscriberlist[deserializedData.EventId].Add(cl);
+                    }
                 }
-                else
+                catch
                 {
-                    TopicSubscriberlist[deserializedData.EventId].Add(cl);
+
                 }
             }
             catch

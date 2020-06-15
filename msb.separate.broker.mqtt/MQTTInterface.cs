@@ -48,15 +48,27 @@ namespace msb.separate.broker.mqtt
                 subInterfaces = new List<MQTTPubSub>();
 
                 foreach (var s in connections)
-                {                    
-                    var subs = config.subscriptions.Where(e => e.Value.Ip == s.Key && e.Value.Port == s.Value);
-                    var sub = new MQTTPubSub(s.Key, s.Value);
+                {
+                    //var pubs = config.publications.Where(e => e.Value.Ip == p.Key && e.Value.Port == p.Value); //funktioniert nicht?
+                    Dictionary<String, SubscriptionInstruction> eventList = new Dictionary<String, SubscriptionInstruction>();
+                    //foreach (var p_ in pubs) eventList.Add(p_.Value.EventId);
+                    foreach (var e_ in config.subscriptions)
+                    {
+                        if (e_.Value.Ip == s.Key && e_.Value.Port == s.Value)
+                        {
+                            eventList.Add(e_.Key, e_.Value);
+                        }
+                    }
 
-                    foreach (var s_ in subs) sub.AddSubscription(s_.Key, s_.Value);
+                    var sub = new MQTTPubSub(s.Key, s.Value, eventList);
 
-                    var pubs = config.publications.Where(e => e.Value.Ip == s.Key && e.Value.Port == s.Value);
-
-                    foreach (var p_ in pubs) relevantClientsForPublishing[p_.Key].Add(sub);
+                    foreach (var e_ in config.publications)
+                    {
+                        if (e_.Value.Ip == s.Key && e_.Value.Port == s.Value)
+                        {
+                            relevantClientsForPublishing[e_.Value.EventId].Add(sub);
+                        }
+                    }
 
                     subInterfaces.Add(sub);
                 }

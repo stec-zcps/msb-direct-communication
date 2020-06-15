@@ -15,7 +15,10 @@ namespace msb.separate.direct.tcp.beispiel
         static void Main(string[] args)
         {
             var config = new TCPConfiguration();
-            config.publications.Add("instr1", new TCPConfiguration.TCPPublicationInstruction() { EventId = "testEvent" });
+            config.publications = new System.Collections.Generic.Dictionary<string, TCPConfiguration.TCPPublicationInstruction>();
+            config.subscriptions = new System.Collections.Generic.Dictionary<string, TCPConfiguration.TCPSubscriptionInstruction>();
+
+            config.publications.Add("instr1", new TCPConfiguration.TCPPublicationInstruction() { EventId = "testEvent", Ip = "127.0.0.1", Port = 1884 });
 
             var fPtr = msb.separate.Interfaces.BaseInterfaceUtils.CreateFunctionPointer(typeof(funktionen).GetMethod("funktion"), null);
             var intFlow = new System.Collections.Generic.Dictionary<string, string>() { { "a", "hallo" }, { "b", "hallo2" } };
@@ -28,6 +31,8 @@ namespace msb.separate.direct.tcp.beispiel
             System.Threading.Thread.Sleep(1000);
 
             tcp.PublishEvent(new msb.separate.EventData() { Id = "testEvent", Data = new System.Collections.Generic.Dictionary<string, object> { { "hallo", "123" }, { "hallo2", "321" } } });
+
+            System.Threading.Thread.Sleep(1000);
 
             tcp.Stop();
 
