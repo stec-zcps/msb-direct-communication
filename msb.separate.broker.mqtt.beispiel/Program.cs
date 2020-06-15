@@ -24,7 +24,7 @@ namespace msb.separate.broker.mqtt.beispiel
 
         static void Main(string[] args)
         {
-            msb.separate.broker.mqtt.MQTTSubscriber s = new MQTTSubscriber("127.0.0.1", 1884);
+            msb.separate.broker.mqtt.MQTTPubSub s = new MQTTPubSub("127.0.0.1", 1884);
             msb.separate.broker.mqtt.MQTTPublisher p = new MQTTPublisher("127.0.0.1", 1884);
 
             var m = msb.separate.Interfaces.BaseInterfaceUtils.CreateFunctionPointer(typeof(funktionen).GetMethod("funktion"), null);

@@ -5,7 +5,6 @@ using System.Net.Sockets;
 using System.Net;
 using System.Diagnostics;
 using Newtonsoft.Json;
-using static msb.separate.Interfaces.BaseInterfaceUtils;
 using System.Linq;
 using msb.separate.Interfaces;
 
