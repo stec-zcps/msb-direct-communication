@@ -6,7 +6,7 @@ namespace msb.separate
     public class SubscriptionInstruction
     {
         public String EventId;
-        public Delegate fPointer;
-        public Dictionary<String, String> paramMapping;
+        public Delegate FunctionPointer;
+        public Dictionary<String, String> IntegrationFlow;
     }
 }

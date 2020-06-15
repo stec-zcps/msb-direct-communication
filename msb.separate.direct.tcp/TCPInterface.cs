@@ -6,9 +6,98 @@ using System.Net;
 using System.Diagnostics;
 using Newtonsoft.Json;
 using static msb.separate.Interfaces.BaseInterfaceUtils;
+using System.Linq;
+using msb.separate.Interfaces;
 
 namespace msb.separate.direct.tcp
 {
+    public class TCPInterface : BaseInterface
+    {
+        private TCPConfiguration configuration;
+
+        private List<TCPSubscriber> subscriber;
+        private TCPPublisher publisher;
+
+        public TCPInterface(TCPConfiguration config)
+        {
+            this.configuration = config;
+
+            List<String> events = new List<string>();
+            foreach(var p in config.publications) events.Add(p.Value.EventId);
+            publisher = new direct.tcp.TCPPublisher(config.publicationIp, config.publicationPort, events);
+
+            List<KeyValuePair<String, UInt16>> subscriptions = new List<KeyValuePair<string, ushort>>();
+
+            foreach(var s in config.subscriptions)
+            {
+                if(!subscriptions.Exists(e => e.Key == s.Value.Ip))
+                {
+                    subscriptions.Add(new KeyValuePair<string, ushort>(s.Value.Ip, s.Value.Port));
+                }
+            }
+
+            if (subscriptions.Count != 0) {
+                subscriber = new List<TCPSubscriber>();
+
+                foreach (var s in subscriptions)
+                {                    
+                    var sub = new TCPSubscriber(s.Key, s.Value);
+                    var subs = config.subscriptions.Where(e => e.Value.Ip == s.Key && e.Value.Port == s.Value);
+
+                    foreach (var s_ in subs) sub.AddSubscription(s_.Key, s_.Value);
+
+                    subscriber.Add(sub);
+                }
+            }
+        }
+
+        public void Start()
+        {
+            publisher.Start();
+
+            if(subscriber != null)
+            {
+                foreach(var s in subscriber)
+                {
+                    s.Connect();
+                    s.Listen();
+                }
+            }
+        }
+
+        public void Stop()
+        {
+            publisher.Stop();
+
+            if (subscriber != null)
+            {
+                foreach (var s in subscriber)
+                {
+                    s.Disconnect();
+                }
+            }
+        }
+    }
+
+    public class TCPConfiguration
+    {
+        public class TCPSubscriptionInstruction : SubscriptionInstruction
+        {
+            public string Ip;
+            public UInt16 Port;
+        }
+
+        public class TCPPublicationInstruction : PublicationInstruction
+        {
+        }
+
+        public Dictionary<String, TCPSubscriptionInstruction> subscriptions;
+        public Dictionary<String, TCPPublicationInstruction> publications;
+
+        public string publicationIp;
+        public UInt16 publicationPort;
+    }
+
     public class TCPSubscriber : Interfaces.BaseSubscriber
     {
         private TcpClient tcpClient;
@@ -42,6 +131,11 @@ namespace msb.separate.direct.tcp
             MakeSubscriptions();
 
             return tcpClient.Connected;
+        }
+
+        public void Disconnect()
+        {
+            tcpClient.Close();
         }
 
         public bool AddSubscription(string id, SubscriptionInstruction instr)
@@ -83,11 +177,11 @@ namespace msb.separate.direct.tcp
             {
                 if (s.Value.EventId == deserializedData.Id)
                 {
-                    var pointer = s.Value.fPointer;
+                    var pointer = s.Value.FunctionPointer;
                     var parameters = pointer.Method.GetParameters();
                     var parameterArrayForInvoke = new object[parameters.Length];
 
-                    foreach (var eintrag in s.Value.paramMapping)
+                    foreach (var eintrag in s.Value.IntegrationFlow)
                     {
                         int currentParameterCallIndex = 0;
                         for (; currentParameterCallIndex < parameters.Length; currentParameterCallIndex++)
@@ -180,13 +274,6 @@ namespace msb.separate.direct.tcp
         {
             var cl = (TcpClient)result.AsyncState;
             var b = SubscriberBuffer[cl];
-
-            /*var stream = cl.GetStream();
-            var sizeOfMessage = BitConverter.ToInt32(SubscriberBuffer[cl] as byte[]);
-
-            var messageBuffer = new byte[sizeOfMessage];
-            stream.Read(messageBuffer, 0, sizeOfMessage);*/
-
 
             String messageBuffer = Encoding.ASCII.GetString(b);//messageBuffer);
             messageBuffer = messageBuffer.Trim('\0');

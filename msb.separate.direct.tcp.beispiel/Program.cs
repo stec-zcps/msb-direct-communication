@@ -26,7 +26,7 @@ namespace msb.separate.direct.tcp.beispiel
             p.Start();
 
             var m = msb.separate.Interfaces.BaseInterfaceUtils.CreateFunctionPointer(typeof(funktionen).GetMethod("funktion"), null);
-            s.AddSubscription("testEvent", new SubscriptionInstruction() { EventId = "testEvent", fPointer = m, paramMapping = new System.Collections.Generic.Dictionary<string, string>() { { "a", "hallo" }, { "b", "hallo2" } } });
+            s.AddSubscription("testEvent", new SubscriptionInstruction() { EventId = "testEvent", FunctionPointer = m, IntegrationFlow = new System.Collections.Generic.Dictionary<string, string>() { { "a", "hallo" }, { "b", "hallo2" } } });
 
             s.Connect();
             s.Listen();

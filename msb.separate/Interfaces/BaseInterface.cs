@@ -8,7 +8,8 @@ namespace msb.separate.Interfaces
 {
     public interface BaseInterface
     {
-        bool Connect();
+        public void Start();
+        public void Stop();
     }
 
     public class BaseInterfaceUtils

@@ -52,11 +52,11 @@ namespace msb.separate.broker.mqtt
                     {
                         if (s.Value.EventId == deserializedData.Id)
                         {
-                            var pointer = s.Value.fPointer;
+                            var pointer = s.Value.FunctionPointer;
                             var parameters = pointer.Method.GetParameters();
                             var parameterArrayForInvoke = new object[parameters.Length];
 
-                            foreach (var eintrag in s.Value.paramMapping)
+                            foreach (var eintrag in s.Value.IntegrationFlow)
                             {
                                 int currentParameterCallIndex = 0;
                                 for (; currentParameterCallIndex < parameters.Length; currentParameterCallIndex++)
@@ -85,6 +85,11 @@ namespace msb.separate.broker.mqtt
             }
 
             return true;
+        }
+
+        public void Disconnect()
+        {
+            mqttClient.DisconnectAsync(new MQTTnet.Client.Disconnecting.MqttClientDisconnectOptions(), System.Threading.CancellationToken.None);
         }
 
         public bool AddSubscription(string id, SubscriptionInstruction instr)

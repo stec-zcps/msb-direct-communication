@@ -28,7 +28,7 @@ namespace msb.separate.broker.mqtt.beispiel
             msb.separate.broker.mqtt.MQTTPublisher p = new MQTTPublisher("127.0.0.1", 1884);
 
             var m = msb.separate.Interfaces.BaseInterfaceUtils.CreateFunctionPointer(typeof(funktionen).GetMethod("funktion"), null);
-            s.AddSubscription("testEvent", new SubscriptionInstruction() { EventId = "testEvent", fPointer = m, paramMapping = new System.Collections.Generic.Dictionary<string, string>() { { "a", "hallo" }, { "b", "hallo2" } } });
+            s.AddSubscription("testEvent", new SubscriptionInstruction() { EventId = "testEvent", FunctionPointer = m, IntegrationFlow = new System.Collections.Generic.Dictionary<string, string>() { { "a", "hallo" }, { "b", "hallo2" } } });
 
             p.Connect();
             s.Connect();
