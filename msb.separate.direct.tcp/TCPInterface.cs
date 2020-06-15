@@ -15,7 +15,9 @@ namespace msb.separate.direct.tcp
         private TCPConfiguration configuration;
 
         private List<TCPSubscriber> subscriber;
-        private TCPPublisher publisher;
+        private List<TCPPublisher> publisher;
+
+        private Dictionary<String, List<TCPPublisher>> relevantClientsForPublishing;
 
         public TCPInterface(TCPConfiguration config)
         {
@@ -23,7 +25,6 @@ namespace msb.separate.direct.tcp
 
             List<String> events = new List<string>();
             foreach(var p in config.publications) events.Add(p.Value.EventId);
-            publisher = new direct.tcp.TCPPublisher(config.publicationIp, config.publicationPort, events);
 
             List<KeyValuePair<String, UInt16>> subscriptions = new List<KeyValuePair<string, ushort>>();
 
@@ -48,13 +49,47 @@ namespace msb.separate.direct.tcp
                     subscriber.Add(sub);
                 }
             }
+
+            List<KeyValuePair<String, UInt16>> publications = new List<KeyValuePair<string, ushort>>();
+            relevantClientsForPublishing = new Dictionary<string, List<TCPPublisher>>();
+
+            foreach (var s in config.publications)
+            {
+                if (!relevantClientsForPublishing.ContainsKey(s.Value.EventId)) relevantClientsForPublishing.Add(s.Value.EventId, new List<TCPPublisher>());
+
+                if (!publications.Exists(e => e.Key == s.Value.Ip))
+                {
+                    publications.Add(new KeyValuePair<string, ushort>(s.Value.Ip, s.Value.Port));
+                }
+            }
+
+            if (publications.Count != 0)
+            {
+                publisher = new List<TCPPublisher>();
+
+                foreach (var p in publications)
+                {                    
+                    var pubs = config.publications.Where(e => e.Value.Ip == p.Key && e.Value.Port == p.Value);
+                    List<String> eventList = new List<string>();
+                    foreach (var p_ in pubs) eventList.Add(p_.Value.EventId);
+
+                    var pub = new TCPPublisher(p.Key, p.Value, eventList);
+                    publisher.Add(pub);
+                }
+            }
         }
 
         public void Start()
         {
-            publisher.Start();
+            if (publisher != null)
+            {
+                foreach (var p in publisher)
+                {
+                    p.Start();
+                }
+            }
 
-            if(subscriber != null)
+            if (subscriber != null)
             {
                 foreach(var s in subscriber)
                 {
@@ -66,7 +101,13 @@ namespace msb.separate.direct.tcp
 
         public void Stop()
         {
-            publisher.Stop();
+            if (publisher != null)
+            {
+                foreach (var p in publisher)
+                {
+                    p.Stop();
+                }
+            }
 
             if (subscriber != null)
             {
@@ -79,7 +120,7 @@ namespace msb.separate.direct.tcp
 
         public void PublishEvent(EventData eventToPublish)
         {
-            publisher.PublishEvent(eventToPublish);
+            foreach (var p in relevantClientsForPublishing[eventToPublish.Id]) p.PublishEvent(eventToPublish);
         }
     }
 
@@ -93,6 +134,8 @@ namespace msb.separate.direct.tcp
 
         public class TCPPublicationInstruction : PublicationInstruction
         {
+            public string Ip;
+            public UInt16 Port;
         }
 
         public Dictionary<String, TCPSubscriptionInstruction> subscriptions;

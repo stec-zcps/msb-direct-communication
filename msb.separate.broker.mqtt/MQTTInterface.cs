@@ -48,9 +48,9 @@ namespace msb.separate.broker.mqtt
                 subInterfaces = new List<MQTTPubSub>();
 
                 foreach (var s in connections)
-                {
-                    var sub = new MQTTPubSub(s.Key, s.Value);
+                {                    
                     var subs = config.subscriptions.Where(e => e.Value.Ip == s.Key && e.Value.Port == s.Value);
+                    var sub = new MQTTPubSub(s.Key, s.Value);
 
                     foreach (var s_ in subs) sub.AddSubscription(s_.Key, s_.Value);
 
