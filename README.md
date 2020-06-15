@@ -1,11 +1,13 @@
-Kommunikationsschichterweiterung für Manufacturing Service Bus
-Alain Rödel
+Kommunikationsschichterweiterung für Manufacturing Service Bus  
+siehe https://github.com/research-virtualfortknox  
+Alain Rödel  
 David A. Breunig
 
-separierte Kommunikation
-ausgelegt auf Event-Function-Muster
+öffentlicher Teil  
+separierte Kommunikation  
+ausgelegt auf Event-Function-Muster  
 
 aktuell
 - TCP
-- MQTT
+- MQTT  
 ein Interface kann mehrere Verbindungen halten
