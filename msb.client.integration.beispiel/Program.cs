@@ -28,7 +28,22 @@ namespace msb.client.integration.beispiel
 
             const string MyMsbSmartObjectUuid = "1a17b5e3-3a6a-4e62-97b0-82cfdd1cc818";
             const string MyMsbSmartObjectName = "C# Sample SmartObject";
-            const string MyMsbSmartObjectDescription = "Description of my C# sample SmartObject";
+            const string MyMsbSmartObjectDescription = "{"+
+            "\"Separate\":[{" +
+                "\"Type\":\"TCP\"," +
+                "\"Patterns\":{" +
+                    "\"Events\":{" +
+                        "\"Ip\":\"String\"," +
+                        "\"Port\":\"Int\"" +
+                    "}," +
+                    "\"Functions\":{" +
+                        "\"Ip\":\"String\"," +
+                        "\"Port\":\"Int\"" +
+                    "}" +
+                "}" +
+            "}]" +
+            "}";
+
             const string MyMsbSmartObjectToken = "30e47482-c140-49a9-a79f-6f2396d8e0ab";
 
             const string MyMsbApplicationUuid = "46441dc8-c3ab-4c93-9632-d1f356afb8ca";
@@ -86,7 +101,7 @@ namespace msb.client.integration.beispiel
             {
                 EventData eventData_SimpleEvent = new EventDataBuilder(simpleEvent).SetValue("TestString").Build();
                 myMsbClient.PublishAsync(myMsbSmartObject, eventData_SimpleEvent).Wait();
-                tcp_myMsbSmartObject.PublishEvent(new msb.separate.EventData() { Id = "SimpleEventId", Data = new System.Collections.Generic.Dictionary<string, object> { { "TestString", "123" } });
+                tcp_myMsbSmartObject.PublishEvent(new msb.separate.EventData() { Id = "SimpleEventId", Data = new System.Collections.Generic.Dictionary<string, object> { { "TestString", "123" } } });
 
                 EventData eventData_FlatEvent = new EventDataBuilder(flatEvent).SetValue(new SimpleEvent()).Build();
                 myMsbClient.PublishAsync(myMsbSmartObject, eventData_FlatEvent).Wait();
