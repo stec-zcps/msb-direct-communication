@@ -1,9 +1,10 @@
-Kommunikationsschichterweiterung für Manufacturing Service Bus  
+Kommunikationsschichterweiterung fÃ¼r Manufacturing Service Bus  
 siehe https://github.com/research-virtualfortknox  
-Alain Rödel  
+und https://github.com/research-virtualfortknox/msb-client-websocket-csharp/tree/separate-comm
+Alain RÃ¶del  
 David A. Breunig
 
-öffentlicher Teil  
+Ã¶ffentlicher Teil  
 separierte Kommunikation  
 ausgelegt auf Event-Function-Muster  
 
