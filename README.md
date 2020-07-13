@@ -1,6 +1,7 @@
 Kommunikationsschichterweiterung für Manufacturing Service Bus  
+Arbeitsstand  
 siehe https://github.com/research-virtualfortknox  
-und https://github.com/research-virtualfortknox/msb-client-websocket-csharp/tree/separate-comm
+erweiterte Fassung, integriert in .NET-Client für MSB, muss noch zurückgespiegelt werden: https://github.com/research-virtualfortknox/msb-client-websocket-csharp/tree/separate-comm  
 Alain Rödel  
 David A. Breunig
 
